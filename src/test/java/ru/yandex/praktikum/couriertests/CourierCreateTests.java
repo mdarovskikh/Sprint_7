@@ -9,8 +9,9 @@ import org.junit.Test;
 import ru.yandex.praktikum.courier.CourierCreate;
 import ru.yandex.praktikum.courier.CourierLogin;
 import ru.yandex.praktikum.courier.Data;
-import static org.hamcrest.Matchers.equalTo;
 
+import static org.apache.http.HttpStatus.*;
+import static org.hamcrest.Matchers.equalTo;
 
 public class CourierCreateTests {
     private CourierCreate courierClient;
@@ -29,13 +30,10 @@ public class CourierCreateTests {
     public void createCourierSuccess() {
         ValidatableResponse response = courierClient.createCourier(courier);
         response.assertThat()
-                .statusCode(201)
+                .statusCode(SC_CREATED)
                 .and()
                 .body("ok", equalTo(true));
-        ValidatableResponse loginResponse = courierClient.setCourierID(Data.getData(courier));
-        courierId = loginResponse.extract().path("id").toString();
     }
-
 
     @Test
     @DisplayName("Создание курьера только с обязательными полями")
@@ -44,11 +42,9 @@ public class CourierCreateTests {
         courier.setFirstName("");
         ValidatableResponse courierResponse = courierClient.createCourier(courier);
         courierResponse.assertThat()
-                .statusCode(201)
+                .statusCode(SC_CREATED)
                 .and()
                 .body("ok", equalTo(true));
-        ValidatableResponse setCouroerIdResponse = courierClient.setCourierID(Data.getData(courier));
-        courierId = setCouroerIdResponse.extract().path("id").toString();
     }
 
     @Test
@@ -58,7 +54,7 @@ public class CourierCreateTests {
         courier.setLogin("");
         ValidatableResponse response = courierClient.createCourier(courier);
         response.assertThat()
-                .statusCode(400)
+                .statusCode(SC_BAD_REQUEST)
                 .and()
                 .body("message", equalTo("Недостаточно данных для создания учетной записи"));
     }
@@ -68,16 +64,12 @@ public class CourierCreateTests {
     @Description("Проверка ошибки при создании курьера с существующим login")
     public void createDuplicateCourier() {
         ValidatableResponse firstResponse = courierClient.createCourier(courier);
-        firstResponse.assertThat().statusCode(201);
-
-        ValidatableResponse loginResponse = courierClient.setCourierID(Data.getData(courier));
-        courierId = loginResponse.extract().path("id").toString();
-
+        firstResponse.assertThat().statusCode(SC_CREATED);
         ValidatableResponse secondResponse = courierClient.createCourier(courier);
         secondResponse.assertThat()
-                .statusCode(409)
+                .statusCode(SC_CONFLICT)
                 .and()
-                .body("message", equalTo("Этот логин уже используется"));
+                .body("message", equalTo("Этот логин уже используется."));
     }
 
     @Test
@@ -87,29 +79,37 @@ public class CourierCreateTests {
         courier.setPassword("");
         ValidatableResponse response = courierClient.createCourier(courier);
         response.assertThat()
-                .statusCode(400)
+                .statusCode(SC_BAD_REQUEST)
                 .and()
                 .body("message", equalTo("Недостаточно данных для создания учетной записи"));
     }
 
     @Test
     @DisplayName("Создание курьера без логина, пароля и имени")
-    @Description("Проверка ошибки при создании курьера без login, password, firtsName")
+    @Description("Проверка ошибки при создании курьера без login, password, firstName")
     public void createCourierWithoutLoginPasswordFirstName() {
         courier.setLogin("");
         courier.setPassword("");
         courier.setFirstName("");
         ValidatableResponse courierResponse = courierClient.createCourier(courier);
         courierResponse.assertThat()
-                .statusCode(400)
+                .statusCode(SC_BAD_REQUEST)
                 .and()
                 .body("message", equalTo("Недостаточно данных для создания учетной записи"));
     }
-
     @After
     public void tearDown() {
+        if (courierId == null) {
+            try {
+                ValidatableResponse loginResponse = courierClient.setCourierID(Data.getData(courier));
+                courierId = loginResponse.extract().path("id").toString();
+            } catch (Exception e) {
+                return;
+            }
+        }
         if (courierId != null) {
             courierClient.deleteCourier(courierId);
         }
     }
+
 }

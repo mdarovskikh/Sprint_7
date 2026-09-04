@@ -6,6 +6,7 @@ import io.restassured.response.ValidatableResponse;
 import org.junit.Test;
 import ru.yandex.praktikum.order.OrderCreate;
 import static org.hamcrest.Matchers.equalTo;
+import static org.apache.http.HttpStatus.*;
 
 public class OrderGetTests {
     OrderCreate orderCreate = new OrderCreate();
@@ -17,7 +18,7 @@ public class OrderGetTests {
         String trackOrder = "";
         ValidatableResponse response = orderCreate.getOrderByNumber(trackOrder);
         response.assertThat()
-                .statusCode(400)
+                .statusCode(SC_BAD_REQUEST)
                 .and()
                 .body("message", equalTo("Недостаточно данных для поиска"));
     }
@@ -29,7 +30,7 @@ public class OrderGetTests {
         String trackOrder = "666666";
         ValidatableResponse response = orderCreate.getOrderByNumber(trackOrder);
         response.assertThat()
-                .statusCode(404)
+                .statusCode(SC_NOT_FOUND)
                 .and()
                 .body("message", equalTo("Заказ не найден"));
     }

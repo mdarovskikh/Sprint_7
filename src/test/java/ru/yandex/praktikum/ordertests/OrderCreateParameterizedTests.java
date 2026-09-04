@@ -14,6 +14,7 @@ import java.util.List;
 
 import static ru.yandex.praktikum.utils.User.*;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.apache.http.HttpStatus.*;
 
 @RunWith(Parameterized.class)
 public class OrderCreateParameterizedTests {
@@ -65,7 +66,7 @@ public class OrderCreateParameterizedTests {
         Order order = new Order(firstName, lastName, address, metroStation, phone, rentTime, deliveryDate, comment, colour);
         ValidatableResponse response = orderClient.createNewOrder(order);
         response.assertThat()
-                .statusCode(201)
+                .statusCode(SC_CREATED)
                 .and()
                 .body("track", notNullValue());
     }

@@ -10,6 +10,7 @@ import ru.yandex.praktikum.courier.CourierLogin;
 import io.restassured.response.ValidatableResponse;
 import ru.yandex.praktikum.courier.Data;
 import static org.hamcrest.Matchers.equalTo;
+import static org.apache.http.HttpStatus.*;
 
 public class CourierDeleteTests {
     private CourierCreate courierClient;
@@ -32,7 +33,7 @@ public class CourierDeleteTests {
         courierId = loginResponse.extract().path("id").toString();
         ValidatableResponse deleteResponse = courierClient.deleteCourier(courierId);
         deleteResponse.assertThat()
-                .statusCode(200)
+                .statusCode(SC_OK)
                 .and()
                 .body("ok", equalTo(true));
     }
@@ -43,7 +44,7 @@ public class CourierDeleteTests {
     public void checkDeleteCourierWithoutId() {
         ValidatableResponse deleteResponse = courierClient.deleteCourier("");
         deleteResponse.assertThat()
-                .statusCode(400)
+                .statusCode(SC_BAD_REQUEST)
                 .and()
                 .body("message", equalTo("Недостаточно данных для удаления курьера"));
     }
@@ -55,7 +56,7 @@ public class CourierDeleteTests {
         String invalidId = "666666";
         ValidatableResponse deleteResponse = courierClient.deleteCourier(invalidId);
         deleteResponse.assertThat()
-                .statusCode(404)
+                .statusCode(SC_NOT_FOUND)
                 .and()
                 .body("message", equalTo("Курьера с таким id нет."));
     }
